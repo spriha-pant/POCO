@@ -194,8 +194,9 @@ class PerceiverRotary(nn.Module):
                 latents = latents.reshape(latent_seqlen.shape[0], -1, latents.shape[1])
             return latents
 
+        print("DEC_ATN IN:", output_queries.shape)
         # decode
-        output_queries = output_queries + self.dec_atn(
+        attn_out = self.dec_atn(
             output_queries, 
             latents, 
             output_timestamp_emb, 
@@ -204,6 +205,11 @@ class PerceiverRotary(nn.Module):
             query_seqlen=output_query_seqlen,
             context_seqlen=latent_seqlen,
         )
-        output_queries = output_queries + self.dec_ffn(output_queries)
+        # Torch SDPA adds fake batch dim — remove it
+        if attn_out.dim() == 3 and attn_out.shape[0] == 1:
+            attn_out = attn_out.squeeze(0)
+
+        output_queries = output_queries + attn_out
+        print("DEC_ATN OUT:", output_queries.shape)
 
         return output_queries

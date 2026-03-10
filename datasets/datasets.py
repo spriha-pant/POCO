@@ -2,7 +2,7 @@
 Zebrafish dataset for neural prediction
 """
 
-__all__ = ['Zebrafish', 'ZebrafishAhrens', 'Simulation', 'Celegans', 'CelegansFlavell', 'Mice', 'get_baseline_performance']
+__all__ = ['Zebrafish', 'ZebrafishAhrens', 'Simulation', 'Celegans', 'CelegansFlavell', 'Mice', 'get_baseline_performance', 'BarikMouseMousmi']
 
 import torch
 import torch.utils.data as tud
@@ -15,7 +15,7 @@ from configs.configs import DatasetConfig
 from configs.config_global import \
     ZEBRAFISH_PROCESSED_DIR,ZEBRAFISH_AHRENS_PROCESSED_DIR, N_ZEBRAFISH_AHNRENS_SESSIONS, \
     CELEGANS_PROCESSED_DIR, N_CELEGANS_SESSIONS, CELEGANS_FLAVELL_PROCESSED_DIR, N_CELEGANS_FLAVELL_SESSIONS, \
-    SIM_DIR, MICE_PROCESSED_DIR, ZEBRAFISH_BRAIN_AREAS
+    SIM_DIR, MICE_PROCESSED_DIR, ZEBRAFISH_BRAIN_AREAS, BARIKMOUSEMOUSMI_PROCESSED_DIR
 from utils.data_utils import get_exp_names, get_stim_exp_names, get_mice_sessions
 
 class NeuralDataset(tud.Dataset):
@@ -49,6 +49,10 @@ class NeuralDataset(tud.Dataset):
             raise NotImplementedError(self.sampling_mode)
 
     def __init__(self, config: DatasetConfig, phase='train'):
+        print("=== NeuralDataset INIT CALLED ===")
+        print("DEBUG seq_length:", config.seq_length)
+        print("DEBUG train_split:", config.train_split)
+        print("DEBUG val_split:", config.val_split)
 
         self.neural_data = []
         self.session_id = []
@@ -72,6 +76,14 @@ class NeuralDataset(tud.Dataset):
 
         for all_activity in all_activities:
                     
+            min_required = config.seq_length + 1  # because code uses seq_length + 1
+            length = all_activity.shape[1]
+
+            if length <= min_required:
+                print(f"Skipping session {session_idx} (too short: {length})")
+                session_idx += 1
+                continue
+            
             all_activity: np.ndarray
             # For each fish, split the data into patches
             length = all_activity.shape[1]
@@ -120,12 +132,20 @@ class NeuralDataset(tud.Dataset):
                 
                 self.session_id.append(session_idx)
                 self.neural_data.append(activity)
+                
+                if activity.shape[1] <= config.seq_length + 1:
+                    continue
 
             session_idx += 1
         
         self.window_stride = config.test_set_window_stride if phase != 'train' else 1
         self.seq_length = config.seq_length
         self.data_length = [max(0, (data.shape[1] - self.seq_length - 1) // self.window_stride + 1) for data in self.neural_data]
+        self.data_length = []
+        for idx, data in enumerate(self.neural_data):
+            windows = max(0, (data.shape[1] - self.seq_length - 1) // self.window_stride + 1)
+            print(f"DEBUG session {idx}: length={data.shape[1]}, windows={windows}")
+            self.data_length.append(windows)
         self.num_sessions = session_idx
 
         logging.info(f"---- {config.dataset} {phase} dataset info ----")
@@ -546,6 +566,45 @@ class Mice(Celegans):
         
         return all_activities, all_unit_types
 
+class BarikMouseMousmi(NeuralDataset):
+
+    data_dir = BARIKMOUSEMOUSMI_PROCESSED_DIR
+    n_sessions = 1
+
+    def get_activity_unit_id(self, filename, config):
+        """
+        Load neural activity from the file.
+        Expected format: neurons x time
+        """
+
+        with np.load(filename) as data:
+            activity = data["M"]  # change key if needed
+
+            # simple unit IDs (each neuron gets its own ID)
+            unit_type = np.arange(activity.shape[0])
+
+        return activity, unit_type.astype(int)
+
+    def load_all_activities(self, config: DatasetConfig):
+
+        all_activities = []
+        all_unit_types = []
+        data_dir = self.data_dir
+
+        for idx in range(self.n_sessions):
+
+            filename = os.path.join(data_dir, f"{idx}.npz")
+            
+            all_activity, unit_type = self.get_activity_unit_id(filename, config)
+            print("Loaded activity shape:", all_activity.shape)
+
+            all_activity = self.downsample(all_activity)
+
+            all_activities.append(all_activity)
+            all_unit_types.append(unit_type)
+
+        return all_activities, all_unit_types
+
 class Simulation(NeuralDataset):
 
     def load_all_activities(self, config: DatasetConfig):
@@ -632,6 +691,8 @@ def get_baseline_performance(config: DatasetConfig, phase='train'):
         dataset = CelegansFlavell(config, phase=phase)
     elif config.dataset == 'mice':
         dataset = Mice(config, phase=phase)
+    elif config.dataset == 'barikmousemousmi':
+        dataset = BarikMouseMousmi(config, phase=phase)
     else:
         raise NotImplementedError(config.dataset)
 

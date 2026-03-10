@@ -72,7 +72,49 @@ def poco_test(): # sanity check: different versions of poco should give the same
     config.max_batch = 1000
 
     config_ranges = OrderedDict()
-    config_ranges['dataset_label'] = ['celegans', 'zebrafishahrens_pc']
+    config_ranges['dataset_label'] = ['celegans'] # place any required datasets for your model here eg. 'zebrafishahrens_pc'
+    config_ranges['model_label'] = ['POCO', 'NLinear', 'MLP']
+
+    configs = vary_config(config, config_ranges, mode='combinatorial', num_seed=1)
+    configs = configure_models(configs)
+    configs = configure_dataset(configs)
+    return configs
+
+def model_zapbench(): # sanity check: different versions of poco should give the same result
+    config = NeuralPredictionConfig()
+    config.experiment_name = 'zapbench'
+    config.max_batch = 1000
+
+    config_ranges = OrderedDict()
+    config_ranges['dataset_label'] = ['celegans', 'zebrafishahrens', 'celegansflavell'] # place any required datasets for your model here eg. 'zebrafishahrens_pc'
+    config_ranges['model_label'] = ['POCO', 'NLinear', 'MLP']
+
+    configs = vary_config(config, config_ranges, mode='combinatorial', num_seed=1)
+    configs = configure_models(configs)
+    configs = configure_dataset(configs)
+    return configs
+
+def model_zapbench_seed5(): # sanity check: different versions of poco should give the same result
+    config = NeuralPredictionConfig()
+    config.experiment_name = 'zapbench_seed5'
+    config.max_batch = 1000
+
+    config_ranges = OrderedDict()
+    config_ranges['dataset_label'] = ['celegans', 'zebrafishahrens', 'celegansflavell'] # place any required datasets for your model here eg. 'zebrafishahrens_pc'
+    config_ranges['model_label'] = ['POCO', 'NLinear', 'MLP']
+
+    configs = vary_config(config, config_ranges, mode='combinatorial', num_seed=5)
+    configs = configure_models(configs)
+    configs = configure_dataset(configs)
+    return configs
+
+def model_barikmouse_mousmi(): # sanity check: different versions of poco should give the same result
+    config = NeuralPredictionConfig()
+    config.experiment_name = 'barikmousemousmi'
+    config.max_batch = 1000
+
+    config_ranges = OrderedDict()
+    config_ranges['dataset_label'] = ['barikmousemousmi'] # place any required datasets for your model here eg. 'zebrafishahrens_pc'
     config_ranges['model_label'] = ['POCO', 'NLinear', 'MLP']
 
     configs = vary_config(config, config_ranges, mode='combinatorial', num_seed=1)
@@ -86,7 +128,7 @@ def dataset_test(): # just test that dataset loads ...
     config.max_batch = 0
 
     config_ranges = OrderedDict()
-    config_ranges['dataset_label'] = [['zebrafish', 'zebrafishahrens', 'celegans', 'celegansflavell', 'mice', ]]
+    config_ranges['dataset_label'] = [['celegans']] #'zebrafish', 'zebrafishahrens', 'celegans', 'celegansflavell', 'mice',
     config_ranges['model_label'] = ['NLinear']
 
     configs = vary_config(config, config_ranges, mode='combinatorial', num_seed=1)
@@ -417,7 +459,7 @@ def compare_models_multi_species():
     config.experiment_name = 'compare_models_multi_species'
     config.dataset_label = [
         'zebrafish_pc', 'zebrafishahrens_pc', 'mice_pc', 
-        'mice', 'celegans', 'celegansflavell', 
+        'mice', 'celegans', 'celegansflavell', 'barikmousemousmi', 
     ]
     config.max_batch = 20000
     config_ranges = OrderedDict()
@@ -433,7 +475,7 @@ def compare_models_multi_species_model_size():
     config.experiment_name = 'compare_models_multi_species'
     config.dataset_label = [
         'zebrafish_pc', 'zebrafishahrens_pc', 'mice_pc', 
-        'mice', 'celegans', 'celegansflavell', 
+        'mice', 'celegans', 'celegansflavell, barikmousemousmi' 
     ]
     config.max_batch = 20000
     config_ranges = OrderedDict()

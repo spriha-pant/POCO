@@ -17,6 +17,7 @@ from utils.config_utils import load_config
 from utils.logger import Logger
 from utils.train_utils import (get_grad_norm, grad_clipping, task_init, log_complete)
 from datetime import datetime
+from torch.cuda.amp import autocast
 
 def train_from_path(path):
     """Train from a path with a config file in it."""
@@ -204,9 +205,14 @@ def model_train(config: NeuralPredictionConfig):
 
             for i_loader, train_iter in enumerate(train_data.data_iters):
                 mod_weight = config.mod_w[i_loader]
-                data = next(train_iter)
+                raw_data = next(train_iter) # Get it first
+    
+                # Move to GPU and convert to bfloat16 immediately
+                data = {k: v.to(device='cuda', dtype=torch.bfloat16) if isinstance(v, torch.Tensor) else v 
+                       for k, v in raw_data.items()}
                 data = get_full_input(data, i_loader, config, train_data.input_sizes)
-                dataset_loss = task_func.roll(net, data, 'train')
+                with autocast(dtype=torch.bfloat16):
+                    dataset_loss = task_func.roll(net, data, 'train')
                 if config.log_loss:
                     dataset_loss = torch.log(dataset_loss + 1e-4)
                 loss += dataset_loss * mod_weight
@@ -261,6 +267,7 @@ def model_eval(config: SupervisedLearningBaseConfig):
     task_func: TaskFunction = task_init(config, test_data.input_sizes)
     task_func.mse_baseline['val'] = test_data.get_baselines()
     net = model_init(config, test_data.input_sizes, test_data.unit_types)
+    net = net.to(torch.bfloat16)
     net.load_state_dict(torch.load(osp.join(config.save_path, 'net_best.pth'), weights_only=True))
 
     logger = Logger(output_dir=config.save_path, output_fname='test.txt', exp_name=config.experiment_name)

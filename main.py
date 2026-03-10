@@ -13,6 +13,13 @@ from train import model_train, model_eval
 from configs.config_global import LOG_LEVEL, ROOT_DIR
 from configs.configs import BaseConfig
 
+# Force PyTorch to use the standard math backend instead of flash/mem-efficient, since we're using Blackwell 4500 which is 'too new'
+torch.backends.cuda.enable_flash_sdp(False)
+torch.backends.cuda.enable_mem_efficient_sdp(False)
+torch.backends.cuda.enable_math_sdp(True)
+
+os.environ["XFORMERS_DISABLED"] = "1"
+
 def train_cmd(config_):
     arg = '\'' + config_.save_path + '\''
     command = r'''python -c "import train; train.train_from_path(''' + arg + ''')"'''

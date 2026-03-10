@@ -1,7 +1,11 @@
+from cProfile import label
 import os
 import os.path as osp
 import logging
+
+from networkx import config
 from configs.configs import NeuralPredictionConfig, DatasetConfig
+from datasets.datasets import BarikMouseMousmi
 
 sampling_freqs = {
     'zebrafish': 1,
@@ -9,6 +13,7 @@ sampling_freqs = {
     'mice': 5,
     'celegans': 3,
     'celegansflavell': 2,
+    'barikmousemousmi': 30,
 }
 
 def configure_dataset(configs: dict, control_time_scale=False):
@@ -56,7 +61,9 @@ def configure_dataset(configs: dict, control_time_scale=False):
                         dataset_config.session_ids = list(range(int(session_id), int(session_id_2)))
                     else:
                         dataset_config.session_ids = [int(session_id)]
-
+                
+                print("DATASET LABEL:", label)
+                
                 if dataset_name == 'zebrafish':
                     config.dataset.append('zebrafish')
                     if dataset_type == 'pc':
@@ -117,6 +124,15 @@ def configure_dataset(configs: dict, control_time_scale=False):
                     else:
                         raise ValueError(f'Unknown dataset type: {dataset_type}')
                 
+                elif dataset_name == 'barikmousemousmi':
+                    config.dataset.append('barikmousemousmi')
+                    if dataset_type == 'pc':
+                        dataset_config.pc_dim = 224
+                    elif dataset_type == None:
+                        dataset_config.pc_dim = None
+                    else:
+                        raise ValueError(f'Unknown dataset type: {dataset_type}')
+
                 elif dataset_name == 'sim':
                     config.dataset.append('simulation')
                     dataset_config.n_neurons = int(label_prefix.split('_')[-1])

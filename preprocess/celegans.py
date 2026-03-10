@@ -150,6 +150,9 @@ def celegans_zimmer_preprocess(filter_mode='none'):
         np.savez(out_filename, **save_dict)
 
 def celegans_flavell_preprocess(filter_mode='none'):
+    print("FLAVELL RAW DIR:", CELEGANS_FLAVELL_RAW_DIR)
+    print("EXISTS?:", os.path.exists(CELEGANS_FLAVELL_RAW_DIR))
+    print("FILES FOUND:", os.listdir(CELEGANS_FLAVELL_RAW_DIR))
     processed_dir = CELEGANS_FLAVELL_PROCESSED_DIR
     if filter_mode != 'none':
         processed_dir = osp.join(processed_dir + '_' + filter_mode)
@@ -176,9 +179,11 @@ def celegans_flavell_preprocess(filter_mode='none'):
             )
 
             neuron_names = []
+            labeled_dict = data.get('labeled', {})  # default to empty dict
+
             for i in range(activity.shape[0]):
-                if str(i + 1) in data['labeled']:
-                    neuron_names.append(data['labeled'][str(i + 1)]['label'])
+                if str(i + 1) in labeled_dict:
+                    neuron_names.append(labeled_dict[str(i + 1)]['label'])
                 else:
                     neuron_names.append(str(i + 1))
 

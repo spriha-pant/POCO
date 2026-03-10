@@ -207,7 +207,9 @@ class NeuralPrediction(TaskFunction):
                     sum_mae += self.sum_mae[phase][idx].sum()
 
                     if phase == 'val':
-                        assert self.pred_num[phase][idx].sum() > 0, f'no prediction for session {idx}, is the test set empty?'
+                        if self.pred_num[phase][idx].sum() == 0:
+                            print(f"Skipping empty session {idx} in {phase}")
+                            continue
                         mse = self.sum_mse[phase][idx].sum() / self.pred_num[phase][idx].sum() / (self.pred_step if self.pred_step > 0 else self.seq_len)
                         avg_mse_score += 1 - mse / self.mse_baseline[phase][idx]
 

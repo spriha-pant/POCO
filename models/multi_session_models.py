@@ -588,6 +588,8 @@ class Decoder(nn.Module):
 
         # partition embed to a list of tensors, each of shape (B, D, 1, embedding_dim)
         split_size = [b * d * self.embedding_length for b, d in zip(bsz, d_list)]
+        print("EMBED SHAPE:", embed.shape)
+        print("SPLIT:", split_size)
         embed = torch.split(embed, split_size, dim=0)
         embed = [xx.reshape(b, d, self.embedding_length, self.embedding_dim) for xx, b, d in zip(embed, bsz, d_list)] # (B, D, 1, E)
 

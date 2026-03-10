@@ -1,3 +1,4 @@
+from logging import config
 import os
 import os.path as osp
 import torch
@@ -6,7 +7,7 @@ import logging
 from torch.utils.data import DataLoader, Subset
 
 from configs.configs import BaseConfig, NeuralPredictionConfig, DatasetConfig
-import datasets
+from datasets import datasets
 from configs.config_global import ROOT_DIR
 
 class DatasetIters(object):
@@ -61,10 +62,12 @@ class DatasetIters(object):
         return all_baselines
 
 def init_single_dataset(dataset_name: str, phase: str, config: DatasetConfig):
+    # print("DEBUG init_single_dataset called with:", dataset)
     collate_f = None
     train_flag = phase == 'train'
     input_size = None
-
+    print("DEBUG incoming dataset arg:", dataset_name if 'dataset_name' in locals() else dataset)
+    print("DEBUG config.dataset:", config.dataset)
     if dataset_name == 'zebrafish':
         dataset = datasets.Zebrafish(config, phase=phase)
     elif dataset_name == 'zebrafishahrens':
@@ -77,6 +80,9 @@ def init_single_dataset(dataset_name: str, phase: str, config: DatasetConfig):
         dataset = datasets.CelegansFlavell(config, phase=phase)
     elif dataset_name == 'mice':
         dataset = datasets.Mice(config, phase=phase)
+    elif dataset_name == 'barikmousemousmi':
+        print("DEBUG entering dataset selection")
+        dataset = datasets.BarikMouseMousmi(config, phase=phase)
     else:
         raise NotImplementedError('Dataset not implemented')
 

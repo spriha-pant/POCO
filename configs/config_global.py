@@ -25,6 +25,7 @@ N_ZEBRAFISH_AHNRENS_SESSIONS = 15
 N_CELEGANS_SESSIONS = 5
 N_CELEGANS_FLAVELL_SESSIONS = 40
 N_MICE_SESSIONS = 12
+N_BARIKMOUSEMOUSMI_SESSIONS = 1
 
 RAW_DATA_SUFFIX = '_CNMF_compressed.h5'
 ZEBRAFISH_PROCESSED_DIR = os.path.join(DATA_DIR, 'processed_zebrafish')
@@ -33,6 +34,7 @@ CELEGANS_PROCESSED_DIR = os.path.join(DATA_DIR, 'processed_celegans_zimmer')
 CELEGANS_FLAVELL_PROCESSED_DIR = os.path.join(DATA_DIR, 'processed_celegans_flavell')
 MICE_PROCESSED_DIR = os.path.join(DATA_DIR, 'processed_mice')
 SIM_DIR = osp.join(DATA_DIR, 'simulations')
+BARIKMOUSEMOUSMI_PROCESSED_DIR = os.path.join(DATA_DIR, 'processed_barikmousemousmi')
 
 # device to run algorithm on
 USE_CUDA = torch.cuda.is_available()
