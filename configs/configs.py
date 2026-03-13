@@ -221,7 +221,7 @@ class NeuralPredictionConfig(SupervisedLearningBaseConfig):
         self.task_type = 'neural_prediction'
 
         self.seq_length = 64 # the total length of a sequence
-        self.pred_length = 16 # the last pred_length frames will be predicted
+        self.pred_length = 32 # the last pred_length frames will be predicted
         self.perform_test = True
         self.perform_val = True
         self.loss_mode = 'prediction' # or 'autoregressive'. If 'autoregressive', loss will be computed on next-step predictions starting from the first frame of the sequence.

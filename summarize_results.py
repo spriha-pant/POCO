@@ -2,7 +2,8 @@ import os
 import numpy as np
 from collections import defaultdict
 
-BASE_DIR = "/home/arnablab/POCO/experiments/zapbench_seed5"
+# BASE_DIR = "/home/arnablab/POCO/experiments/zapbench_seed5"
+BASE_DIR = "/home/arnablab/POCO/experiments/barikmousemousmi_seed5"
 
 results = []
 
@@ -33,12 +34,14 @@ for root, dirs, files in os.walk(BASE_DIR):
         headers = lines[0].strip().split("\t")
         values = lines[1].strip().split("\t")
 
-        if "celegans_val_score" in headers:
-            score_idx = headers.index("celegans_val_score")
-        elif "celegansflavell_val_score" in headers:
-            score_idx = headers.index("celegansflavell_val_score")
-        elif "zebrafishahrens_val_score" in headers:
-            score_idx = headers.index("zebrafishahrens_val_score")
+        # if "celegans_val_score" in headers:
+        #     score_idx = headers.index("celegans_val_score")
+        # elif "celegansflavell_val_score" in headers:
+        #     score_idx = headers.index("celegansflavell_val_score")
+        # elif "zebrafishahrens_val_score" in headers:
+        #     score_idx = headers.index("zebrafishahrens_val_score")
+        if "barikmousemousmi_val_score" in headers:
+            score_idx = headers.index("barikmousemousmi_val_score")
         else:
             # generic fallback: find any column ending with _val_score
             score_idx = None

@@ -193,6 +193,8 @@ class NeuralDataset(tud.Dataset):
         print('Calculating chance performance...')
         for idx in tqdm(range(len(self))):
             data, info = self[idx]
+            if isinstance(data, torch.Tensor):
+                data = data.cpu().numpy()
 
             data: np.ndarray = data
             session_idx = info['session_idx']
@@ -200,7 +202,8 @@ class NeuralDataset(tud.Dataset):
             if self.pred_length > 0:
                 # for predicition, calculate the performance when copying the last frame
                 error = data[-self.pred_length: ] - data[-self.pred_length - 1, :] # L * D
-                act_list[session_idx] += data[-self.pred_length: ].mean(axis=0)
+                act_list[session_idx] += data[-self.pred_length:].mean(axis=0)
+
             else:
                 # for reconstruction, calculate the performance when copying the mean
                 error = data - data.mean(axis=0)
@@ -216,6 +219,8 @@ class NeuralDataset(tud.Dataset):
 
         for idx in tqdm(range(len(self))):
             data, info = self[idx]
+            if isinstance(data, torch.Tensor):
+                data = data.cpu().numpy()
             data: np.ndarray = data
             session_idx = info['session_idx']
             if self.pred_length > 0:
@@ -307,9 +312,17 @@ class NeuralDataset(tud.Dataset):
 
         session_idx = self.session_id[patch_idx]
         pos = idx * self.window_stride
-        data = self.neural_data[patch_idx][:, pos: pos + self.seq_length].transpose()
-        info = {'session_idx': session_idx, 'time_idx': idx, }
-
+        data = torch.from_numpy(
+            self.neural_data[patch_idx][:, pos: pos + self.seq_length].transpose()
+        ).float()
+        info = {
+            'session_idx': int(session_idx),
+            'time_idx': int(idx),
+            'normalize_coef': torch.ones(self.seq_length)
+        }
+        for k, v in info.items():
+            if isinstance(v, np.ndarray):
+                info[k] = torch.from_numpy(v).float()
         return data, info
     
     def collate_fn(self, batch):
@@ -327,18 +340,27 @@ class NeuralDataset(tud.Dataset):
                 target_list.append(torch.zeros(self.seq_length - 1, 0, self.input_size[session_idx]))
                 info_list.append({'session_idx': session_idx, 'time_idx': [], 'normalize_coef': self.normalize_coef[session_idx]})
                 continue
+            print("example element shape:", batch[indices[0]][0].shape)
+            print("num indices:", len(indices))
 
-            data = torch.stack([torch.from_numpy(batch[idx][0]).float() for idx in indices], dim=1) # L * B * D
+            data = torch.stack([
+                (batch[idx][0] if isinstance(batch[idx][0], torch.Tensor)
+                else torch.from_numpy(batch[idx][0]).float()).unsqueeze(1)
+                for idx in indices
+            ], dim=1).squeeze(2)
+
             input_list.append(data[: -self.pred_length] if self.pred_length > 0 else data)
+
             target_dim = data.shape[2]
-            target_list.append(data[1:, :, : target_dim])
+            target_list.append(data[1:, :, :target_dim])
 
             info_list.append({
                 'session_idx': session_idx, 
                 'time_idx': [batch[idx][1]['time_idx'] for idx in indices],
                 'normalize_coef': self.normalize_coef[session_idx]
             })
-
+        
+        print("DEBUG get_full_input returning input_list[0] shape:", input_list[0].shape)
         return input_list, target_list, info_list
 
 class Zebrafish(NeuralDataset):

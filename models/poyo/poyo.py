@@ -3,6 +3,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+print("POYO FILE LOADED:", __file__)
+
 from models.poyo import (
     Embedding,
     InfiniteVocabEmbedding,
@@ -89,6 +91,8 @@ class POYO(nn.Module):
         dataset_index, # (B, )
         unit_type, # sum(B * D)
     ):
+        print("x shape:", x.shape)
+        print("input_proj weight:", self.input_proj.weight.shape)
 
         # input
         L = x.shape[1]

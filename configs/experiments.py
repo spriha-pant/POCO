@@ -122,6 +122,20 @@ def model_barikmouse_mousmi(): # sanity check: different versions of poco should
     configs = configure_dataset(configs)
     return configs
 
+def model_barikmouse_mousmi_seed5(): # sanity check: different versions of poco should give the same result
+    config = NeuralPredictionConfig()
+    config.experiment_name = 'barikmousemousmi_seed5'
+    config.max_batch = 1000
+
+    config_ranges = OrderedDict()
+    config_ranges['dataset_label'] = ['barikmousemousmi'] # place any required datasets for your model here eg. 'zebrafishahrens_pc'
+    config_ranges['model_label'] = ['POCO', 'NLinear', 'MLP']
+
+    configs = vary_config(config, config_ranges, mode='combinatorial', num_seed=5)
+    configs = configure_models(configs)
+    configs = configure_dataset(configs)
+    return configs
+
 def dataset_test(): # just test that dataset loads ...
     config = NeuralPredictionConfig()
     config.experiment_name = 'dataset_test'

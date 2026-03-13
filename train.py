@@ -2,6 +2,7 @@ import logging
 import os.path as osp
 import random
 import itertools
+from networkx import config
 import numpy as np
 import torch
 import torch.nn as nn
@@ -107,6 +108,7 @@ def get_full_input(batch, dataset_idx, config: NeuralPredictionConfig, input_siz
     info_list = []
 
     for i, size in enumerate(input_size_list):
+        print("CONFIG:", config.seq_length, config.pred_length)
         if i >= dataset_start_idx[dataset_idx] and i < dataset_start_idx[dataset_idx + 1]:
             idx = i - dataset_start_idx[dataset_idx]
             input_list.append(batch_input[idx])
@@ -206,12 +208,31 @@ def model_train(config: NeuralPredictionConfig):
             for i_loader, train_iter in enumerate(train_data.data_iters):
                 mod_weight = config.mod_w[i_loader]
                 raw_data = next(train_iter) # Get it first
-    
+                print("==== RAW DATA STRUCTURE ====")
+                print(type(raw_data))
+                if isinstance(raw_data, tuple):
+                    for i, x in enumerate(raw_data):
+                        print(f" element {i} type:", type(x))
                 # Move to GPU and convert to bfloat16 immediately
-                data = {k: v.to(device='cuda', dtype=torch.bfloat16) if isinstance(v, torch.Tensor) else v 
-                       for k, v in raw_data.items()}
-                data = get_full_input(data, i_loader, config, train_data.input_sizes)
-                with autocast(dtype=torch.bfloat16):
+                # print("DEBUG raw_data type:", type(raw_data))
+                # print("DEBUG raw_data:", raw_data)
+                # data = {k: v.to(device='cuda', dtype=torch.bfloat16) if isinstance(v, torch.Tensor) else v 
+                        # for k, v in raw_data.items()}
+                data = get_full_input(raw_data, i_loader, config, train_data.input_sizes)
+                with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+                    print("\n===== DATA PASSED TO ROLL =====")
+                    print(type(data))
+                    # print(data)
+                    # if isinstance(data, dict):
+                    #     for k, v in data.items():
+                    #         print("key:", k, "type:", type(v))
+                    #         if isinstance(v, list):
+                    #             print("  list length:", len(v))
+                    #             if len(v) > 0:
+                    #                 print("  first element type:", type(v[0]))
+                    #         if isinstance(v, torch.Tensor):
+                    #             print("  tensor shape:", v.shape)
+                    print("================================\n")
                     dataset_loss = task_func.roll(net, data, 'train')
                 if config.log_loss:
                     dataset_loss = torch.log(dataset_loss + 1e-4)

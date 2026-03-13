@@ -127,7 +127,7 @@ def configure_dataset(configs: dict, control_time_scale=False):
                 elif dataset_name == 'barikmousemousmi':
                     config.dataset.append('barikmousemousmi')
                     if dataset_type == 'pc':
-                        dataset_config.pc_dim = 224
+                        dataset_config.pc_dim = 64
                     elif dataset_type == None:
                         dataset_config.pc_dim = None
                     else:

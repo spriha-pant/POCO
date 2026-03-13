@@ -1,3 +1,4 @@
+from cProfile import label
 from logging import config
 import os
 import os.path as osp
@@ -66,6 +67,7 @@ def init_single_dataset(dataset_name: str, phase: str, config: DatasetConfig):
     collate_f = None
     train_flag = phase == 'train'
     input_size = None
+    print("pc_dim in config:", config.pc_dim)
     print("DEBUG incoming dataset arg:", dataset_name if 'dataset_name' in locals() else dataset)
     print("DEBUG config.dataset:", config.dataset)
     if dataset_name == 'zebrafish':
@@ -85,6 +87,7 @@ def init_single_dataset(dataset_name: str, phase: str, config: DatasetConfig):
         dataset = datasets.BarikMouseMousmi(config, phase=phase)
     else:
         raise NotImplementedError('Dataset not implemented')
+    print("DATASET PC_DIM:", config.pc_dim)
 
     collate_f = dataset.collate_fn
     input_size = dataset.input_size

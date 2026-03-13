@@ -1,3 +1,4 @@
+from pyexpat import model
 import random
 import numpy as np
 import torch
@@ -20,6 +21,19 @@ def data_batch_to_device(data_b, device=DEVICE):
     elif type(data_b) is tuple or type(data_b) is list:
         return [data_batch_to_device(data, device) for data in data_b]
     else:
+        print("DEBUG BAD TYPE DETECTED")
+        print("TYPE:", type(data_b))
+
+        if isinstance(data_b, dict):
+            for k, v in data_b.items():
+                print("  key:", k, "type:", type(v))
+
+        elif isinstance(data_b, (list, tuple)):
+            for i, v in enumerate(data_b):
+                print("  idx:", i, "type:", type(v))
+
+        else:
+            print("VALUE:", data_b)
         raise NotImplementedError("input type not recognized")
 
 class TaskFunction:
@@ -98,10 +112,41 @@ class NeuralPrediction(TaskFunction):
                 self.sum_mae[phase].append(np.zeros((L, size))) # L, D
 
     def roll(self, model: nn.Module, data_batch: tuple, phase: str = 'train'):
+        
+        # print("\n===== DATA INSIDE ROLL =====")
+        # print(type(data_batch))
+        # if isinstance(data_batch, dict):
+        #     for k, v in data_batch.items():
+        #         print("key:", k, "type:", type(v))
+        # print("============================\n")
+        
         train_flag = phase == 'train'
         
         input, target, info_list = data_batch
+        print("DEBUG input is:", type(input), len(input) if isinstance(input, list) else "NOT A LIST")
+        print("DEBUG input[0] shape:", input[0].shape if isinstance(input, list) else input.shape)
+        print("AFTER UNPACK")
+        print(type(input), type(target), type(info_list))
+        print("input shape:", getattr(input, "shape", None))
+        print("\n==== STRUCTURE BEFORE DEVICE MOVE ====")
+        print("input type:", type(input))
+        print("target type:", type(target))
+        print("input[0] shape:", input[0].shape)
+        print("target[0] shape:", target[0].shape)
+
+        if isinstance(input, (list, tuple)):
+            print("input[0] type:", type(input[0]))
+        if isinstance(target, (list, tuple)):
+            print("target[0] type:", type(target[0]))
+
+        if isinstance(input, dict):
+            print("input keys:", input.keys())
+        if isinstance(target, dict):
+            print("target keys:", target.keys())
+
+        print("======================================\n")
         input, target = data_batch_to_device((input, target))
+        input = [x.to(next(model.parameters()).dtype) for x in input]
         output = model(input)
     
         task_loss = torch.zeros(1).to(DEVICE)
@@ -124,9 +169,9 @@ class NeuralPrediction(TaskFunction):
 
             if len(self.sample_trials[phase]) < len(input):
                 self.sample_trials[phase].append((
-                    out.detach().cpu().numpy(), 
-                    tar.detach().cpu().numpy(), 
-                    inp.detach().cpu().numpy()
+                    out.detach().float().cpu().numpy(),
+                    tar.detach().float().cpu().numpy(),
+                    inp.detach().float().cpu().numpy()
                 ))
             
             with torch.no_grad():

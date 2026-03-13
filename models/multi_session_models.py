@@ -436,7 +436,8 @@ class Decoder(nn.Module):
             poyo_query_mode = config.poyo_query_mode
             self.embedding_length = 1 if poyo_query_mode == 'single' else config.pred_length
             self.decoder = POYO(
-                input_dim=self.token_dim, 
+                # input_dim=self.token_dim, 
+                input_dim=16, # hardcoded for now, since the input projection layer will be trained anyway
                 dim=config.decoder_hidden_size,
                 depth=config.decoder_num_layers, 
                 self_heads=config.decoder_num_heads,
@@ -706,6 +707,7 @@ class NLinear(nn.Module):
         preds = []
         for x in x_list:
             # x: (L, B, D)
+            print("DEBUG x type:", type(x), "x shape:", x.shape)
             seq_last = x[-1:, :, :].detach()
             x = x - seq_last
             x = self.Linear(x.permute(1, 2, 0)).permute(2, 0, 1)

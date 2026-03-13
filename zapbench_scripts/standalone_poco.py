@@ -953,7 +953,7 @@ if __name__ == "__main__":
     config.decoder_hidden_size = 64
 
     config.seq_length = 64
-    config.pred_length = 16 # context length is 64 - 16 = 48
+    config.pred_length = 32 # context length is 64 - 16 = 48
 
     input_size = [[5, 10]] # 2 sessions, 5 and 10 units
     model = POCO(config, input_size).to(device)
